@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DecoPress Pricing Dashboard 2026</title>
+<style>
+:root {
+  --navy:#00338D;--blue:#1B6FCC;--light:#3BA3E0;--green:#0F6E56;
+  --pending:#BA7517;--pending-bg:#FAEEDA;--pending-border:#EF9F27;
+  --white:#fff;--bg:#f4f6fb;--surface:#fff;
+  --border:#e2e6f0;--text:#1a1f2e;--muted:#6b7280;--faint:#9ca3af;
+  --alt:#F7F9FD;--sec-bg:#EEF3FB;--input-bg:#EBF3FF;
+  --mat-bg:#E6F1FB;--mat-text:#0C447C;
+  --lab-bg:#EAF3DE;--lab-text:#27500A;
+  --font:'Segoe UI',system-ui,-apple-system,sans-serif;
+  --mono:'SF Mono','Fira Code',monospace;
+  --r:10px;--r-sm:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px}
+.hdr{background:var(--navy);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;position:sticky;top:0;z-index:100}
+.hdr-logo{font-size:17px;font-weight:700;letter-spacing:2px;color:#fff}
+.hdr-logo span{color:var(--light)}
+.hdr-status{font-size:11px;color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.1);padding:3px 10px;border-radius:4px}
+.pending-bar{background:var(--pending-bg);border-bottom:1px solid var(--pending-border);padding:7px 1.5rem;font-size:12px;color:var(--pending)}
+.tab-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;overflow-x:auto;position:sticky;top:54px;z-index:99}
+.tab{padding:12px 15px;font-size:12px;font-weight:400;background:none;border:none;border-bottom:3px solid transparent;cursor:pointer;color:var(--muted);white-space:nowrap}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:600}
+.panel{display:none;padding:1.5rem}
+.panel.active{display:block}
+.prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+.prod-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.prod-card-hdr{background:var(--navy);padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+.prod-name{font-size:13px;font-weight:600;color:#fff}
+.prod-sku{font-size:10px;color:rgba(255,255,255,0.6);font-family:var(--mono);background:rgba(255,255,255,0.12);padding:2px 8px;border-radius:4px}
+.prod-body{padding:12px 14px}
+.sec-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:10px 0 5px;padding-top:8px;border-top:1px solid var(--border)}
+.sec-label:first-child{margin-top:0;padding-top:0;border-top:none}
+.info-row{display:flex;justify-content:space-between;padding:3px 0;font-size:11px;border-bottom:0.5px solid var(--border)}
+.info-row:last-child{border-bottom:none}
+.info-lbl{color:var(--muted)}
+.info-val{font-weight:500;color:var(--text);font-size:11px}
+.chip-row{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:10px;font-family:var(--mono);padding:2px 7px;border-radius:4px;border:0.5px solid var(--border);background:var(--alt);color:var(--muted)}
+.chip.base{background:var(--input-bg);color:var(--mat-text);border-color:#B5D4F4;font-weight:600}
+.stack-blk{border-radius:var(--r-sm);overflow:hidden;margin-bottom:8px}
+.stack-hdr{padding:4px 10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.stack-hdr.mat{background:var(--mat-bg);color:var(--mat-text)}
+.stack-hdr.lab{background:var(--lab-bg);color:var(--lab-text)}
+.stack-row{display:flex;justify-content:space-between;padding:4px 10px;font-size:11px;border-bottom:0.5px solid var(--border);background:var(--surface)}
+.stack-row:last-child{border-bottom:none}
+.stack-row.alt{background:var(--alt)}
+.stack-row.pend{background:var(--pending-bg)}
+.stack-lbl{color:var(--muted)}
+.stack-lbl.pend{color:var(--pending)}
+.stack-val{font-family:var(--mono);font-weight:500;color:var(--text);font-size:11px}
+.stack-val.pend{color:var(--pending)}
+.subtotal{display:flex;justify-content:space-between;padding:4px 10px;font-size:11px;font-weight:600}
+.subtotal.mat{background:var(--mat-bg);color:var(--mat-text)}
+.subtotal.lab{background:var(--lab-bg);color:var(--lab-text)}
+.panel-total{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:8px 12px;background:var(--navy);border-radius:var(--r-sm)}
+.panel-total-lbl{font-size:12px;font-weight:600;color:#fff}
+.panel-total-val{font-size:16px;font-weight:700;color:#fff;font-family:var(--mono)}
+.panel-total-val.pend{color:var(--pending-bg)}
+.pricing-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:1.5rem}
+.pricing-hdr{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.pricing-title{font-size:13px;font-weight:600;color:var(--text)}
+.pricing-sub{font-size:11px;color:var(--muted);font-weight:400}
+.vl-wrap{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.vl-wrap.on{color:var(--pending)}
+.toggle{position:relative;width:36px;height:20px;cursor:pointer;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.t-track{position:absolute;inset:0;background:var(--border);border-radius:20px;transition:background .2s}
+.t-thumb{position:absolute;width:14px;height:14px;top:3px;left:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle input:checked~.t-track{background:var(--pending)}
+.toggle input:checked~.t-thumb{transform:translateX(16px)}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11px}
+thead tr:first-child th{background:var(--navy);color:#fff;padding:7px 8px;text-align:center;font-size:10px;font-weight:600;white-space:nowrap}
+thead tr:first-child th:first-child,
+thead tr:first-child th:nth-child(2),
+thead tr:first-child th:nth-child(3){text-align:left}
+thead tr:nth-child(2) th{background:var(--sec-bg);color:var(--muted);padding:4px 8px;font-size:10px;font-weight:600;border-bottom:1px solid var(--border)}
+tbody tr:nth-child(even) td{background:var(--alt)}
+tbody tr:hover td{background:#eef4ff}
+td{padding:5px 8px;border-bottom:0.5px solid var(--border);white-space:nowrap}
+td:first-child{color:var(--text);font-size:11px;font-weight:500}
+td:nth-child(2){color:var(--muted);font-size:10px;text-align:center}
+td:nth-child(3){font-family:var(--mono);font-size:11px;color:var(--text);text-align:right}
+td.dist{font-family:var(--mono);font-size:11px;color:var(--blue);text-align:right}
+td.part{font-family:var(--mono);font-size:11px;color:var(--green);text-align:right}
+tbody tr:last-child td{border-bottom:none}
+.tbl-footer{display:flex;align-items:center;gap:16px;padding:8px 14px;background:var(--alt);border-top:1px solid var(--border)}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+.leg-dot{width:7px;height:7px;border-radius:50%}
+.tbl-note{margin-left:auto;font-size:10px;color:var(--faint);font-style:italic}
+.sku-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
+.sku-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.sku-card-hdr{padding:8px 12px;background:var(--sec-bg);font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:.5px}
+.sku-row{display:flex;align-items:flex-start;gap:8px;padding:6px 12px;font-size:11px;border-bottom:0.5px solid var(--border)}
+.sku-row:last-child{border-bottom:none}
+.sku-row.alt{background:var(--alt)}
+.sku-code{font-family:var(--mono);font-weight:600;color:var(--navy);min-width:72px;flex-shrink:0}
+.sku-name{font-weight:500;color:var(--text);min-width:120px;flex-shrink:0}
+.sku-desc{color:var(--muted);font-size:10px}
+.format-box{background:var(--input-bg);border:1px solid #B5D4F4;border-radius:var(--r-sm);padding:10px 14px;margin-bottom:1rem;font-size:12px;color:var(--mat-text)}
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;gap:1rem;color:var(--muted);font-size:13px}
+.spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-logo">DECO<span>PRESS</span></div>
+  <span class="hdr-status" id="load-status">Loading...</span>
+</div>
+<div class="pending-bar">⚠ Some costs are pending — shown in amber. Update values in Cost Engine Sheet to populate.</div>
+
+<div class="tab-bar">
+  <button class="tab active"  onclick="switchTab('sku',this)">SKU Reference</button>
+  <button class="tab" onclick="switchTab('sublimated',this)">Sublimated</button>
+  <button class="tab" onclick="switchTab('sublimated-emb',this)">Sublimated EMB</button>
+  <button class="tab" onclick="switchTab('laser-etched',this)">Laser Etched</button>
+  <button class="tab" onclick="switchTab('laser-etched-emb',this)">Laser Etched EMB</button>
+  <button class="tab" onclick="switchTab('deco3d',this)">Deco3D</button>
+  <button class="tab" onclick="switchTab('supa3d',this)">SUPA3D</button>
+  <button class="tab" onclick="switchTab('df',this)">DF</button>
+  <button class="tab" onclick="switchTab('decometallic',this)">DecoMetallic</button>
+  <button class="tab" onclick="switchTab('ecostiks',this)">Ecostiks</button>
+</div>
+
+<div id="panel-sku"            class="panel active"><div class="loading"><div class="spinner"></div>Loading...</div></div>
+<div id="panel-sublimated"     class="panel"></div>
+<div id="panel-sublimated-emb" class="panel"></div>
+<div id="panel-laser-etched"   class="panel"></div>
+<div id="panel-laser-etched-emb" class="panel"></div>
+<div id="panel-deco3d"         class="panel"></div>
+<div id="panel-supa3d"         class="panel"></div>
+<div id="panel-df"             class="panel"></div>
+<div id="panel-decometallic"   class="panel"></div>
+<div id="panel-ecostiks"       class="panel"></div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxhF34QYOSQCZFNbrx3iwE_LbXiWx26orYS24w7kYaKaA0_mLWcCh-JzfYNDK-YXTKC1w/exec';
+const MARGIN_DIST = 0.50, MARGIN_PART = 0.40;
+const QTYS = ['10','25','50','100','250','500','1000'];
+const D_DISC = {10:0,25:0,50:.05,100:.10,250:.15,500:.22,1000:.28};
+const P_DISC = {10:0,25:0,50:.05,100:.10,250:.14,500:.20,1000:.25};
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let RAW = {};
+let M = {};   // materials: name -> price_per_panel
+let L = {};   // labor: action -> cost_per_panel
+let LS = {};  // labor: action -> status
+let Y = [];   // yields standard
+let YE = [];  // yields emb
+let REC = {}; // recipes: sku -> recipe object
+let VL = {};  // velcro toggle state per tab
+
+// ── LOAD ──────────────────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    const res  = await fetch(SCRIPT_URL);
+    const text = await res.text();
+    const json = JSON.parse(text);
+    processData(json);
+  } catch(e) {
+    console.warn('Load failed:', e);
+    document.getElementById('load-status').textContent = 'Offline — defaults';
+    useDefaults(); buildAll();
+  }
+}
+
+function processData(json) {
+  try {
+    if (!json || json.status !== 'ok') throw new Error(json ? json.message : 'No data');
+    RAW = json;
+
+    json.materials.forEach(r => {
+      if (r.MATERIAL) M[r.MATERIAL] = parseFloat(r.PRICE_PER_PANEL) || 0;
+    });
+    json.labor.forEach(r => {
+      if (r.ACTION) {
+        L[r.ACTION] = parseFloat(r.COST_PER_PANEL) || 0;
+        LS[r.ACTION] = r.STATUS || 'CONFIRMED';
+      }
+    });
+    Y  = json.yields.map(r => ({ size:r.SIZE, ups:parseInt(r.UPS_PER_PANEL)||0 }));
+    YE = json.yieldsEmb.map(r => ({
+      size:r.SIZE, ups:parseInt(r.UPS_PER_PANEL)||0,
+      stitches:parseInt(r.STITCH_COUNT)||0
+    }));
+    DATA.skuRef = json.skuRef;
+
+    const recRows = json.recipes || [];
+    if (recRows.length > 0) {
+      const skuRow  = recRows.find(r => r['ROW_TYPE']==='INFO' && r['LABEL']==='Base Recipe SKU');
+      const allKeys = Object.keys(recRows[0]).filter(k => k!=='ROW_TYPE' && k!=='LABEL');
+      const colToSku = {};
+      if (skuRow) { allKeys.forEach(k => { if (skuRow[k]) colToSku[k] = skuRow[k]; }); }
+      else         { allKeys.forEach(k => { colToSku[k] = k; }); }
+      Object.values(colToSku).filter(Boolean).forEach(sku => {
+        REC[sku] = { sku, product:'', panelType:'STANDARD', materials:[], labor:[] };
+      });
+      recRows.forEach(row => {
+        const type = row['ROW_TYPE'], label = row['LABEL'];
+        if (type === 'PRODUCT') {
+          Object.entries(colToSku).forEach(([col,sku]) => { if (row[col]) REC[sku].product = row[col]; });
+        } else if (type === 'INFO' && label === 'Panel Type') {
+          Object.entries(colToSku).forEach(([col,sku]) => { if (row[col]) REC[sku].panelType = row[col]; });
+        } else if (type === 'MATERIAL') {
+          Object.entries(colToSku).forEach(([col,sku]) => {
+            const mult = parseFloat(row[col]);
+            if (mult > 0) REC[sku].materials.push({ name:label, mult });
+          });
+        } else if (type === 'LABOR') {
+          Object.entries(colToSku).forEach(([col,sku]) => {
+            const mult = parseFloat(row[col]);
+            if (mult > 0) REC[sku].labor.push({ name:label, mult });
+          });
+        }
+      });
+    }
+
+    document.getElementById('load-status').textContent = 'Loaded ✓';
+    buildAll();
+  } catch(e) {
+    console.warn('Process failed:', e);
+    document.getElementById('load-status').textContent = 'Offline — defaults';
+    useDefaults(); buildAll();
+  }
+}
+
+
+function useDefaults() {
+  M = {
+    'DecoTwill - DT':1.75,'SimWoven - SW':1.18,'DecoLeather - Saddle':2.21,
+    'DecoSuede - Chestnut':1.82,'Satin - 3D top layer':1.18,
+    'Jacquard - 3D/S3D base':1.81,'Sports Twill':4.72,
+    'Metallic - Gold':4.61,'Pellon stabilizer':0.875,
+    'Silicone - Black':8.54,'Apparel - AP (3218)':2.03,
+    'PSA  - MP (A465)':3.02,'Crafter - CR (PS965)':3.16,
+    'Velcro - VL':5.07,
+  };
+  L = {
+    'Setup / graphics':2.50,'Sublimation press':1.75,'Lamination press':2.917,
+    'Laser cut':16.25,'Laser etch':37.92,'Kiss cut':0,'Weeding':11.667,
+    'Individual cut / sort':2.917,'EMB Panel Lamination':2.917,'EMB Panel Laser cut':4.333,
+    'EMB machine run':0,'EMB stitch rate':1.00,'QC':0,'Pack / ship':0,'Misc':0,
+  };
+  Y = [
+    {size:'1.5"x1.5"',ups:192},{size:'2"x2"',ups:108},{size:'2.5"x2.5"',ups:72},
+    {size:'3"x3"',ups:48},{size:'3.5"x3.5"',ups:30},{size:'4"x4"',ups:20},
+    {size:'4"x2.5"',ups:32},{size:'4.5"x4.5"',ups:16},{size:'5"x5"',ups:12},
+    {size:'5.5"x5.5"',ups:12},{size:'6"x6"',ups:9},{size:'6.5"x6.5"',ups:9},
+    {size:'8"x5"',ups:8},{size:'4"x12"',ups:8},{size:'6"x4"',ups:12},
+    {size:'5"x14"',ups:3},{size:'10"x6"',ups:4},
+  ];
+  YE = [
+    {size:'1.5"x1.5"',ups:40,stitches:897},{size:'2"x2"',ups:24,stitches:1201},
+    {size:'2.5"x2.5"',ups:15,stitches:1497},{size:'3"x3"',ups:12,stitches:1801},
+    {size:'3.5"x3.5"',ups:8,stitches:2049},{size:'4"x4"',ups:6,stitches:2120},
+    {size:'4"x2.5"',ups:9,stitches:1736},{size:'4.5"x4.5"',ups:6,stitches:2664},
+    {size:'5"x5"',ups:2,stitches:2996},{size:'5.5"x5.5"',ups:2,stitches:3400},
+    {size:'6"x6"',ups:2,stitches:3776},{size:'4"x12"',ups:2,stitches:4316},
+  ];
+  // Build default recipes
+  buildDefaultRecipes();
+}
+
+function buildDefaultRecipes() {
+  const mkRec = (product, sku, panelType, mats, labs) => {
+    REC[sku] = { product, sku, panelType,
+      materials: mats.map(([name,mult])=>({name,mult})),
+      labor: labs.map(([name,mult])=>({name,mult}))
+    };
+  };
+  const hw = [['Apparel - AP (3218)',1],['PSA  - MP (A465)',1]];
+  const subLab = [['Setup / graphics',1],['Sublimation press',1],['Lamination press',1],['Laser cut',1],['QC',1],['Pack / ship',1]];
+  const etchLab = [['Setup / graphics',1],['Lamination press',1],['Laser etch',1],['Laser cut',1],['QC',1],['Pack / ship',1]];
+  const embExtra = [['EMB Panel Lamination',1],['EMB Panel Laser cut',1]];
+  const embLab = [...subLab.slice(0,-2), ...embExtra, ['QC',1],['Pack / ship',1]];
+  const etchEmbLab = [...etchLab.slice(0,-2), ...embExtra, ['QC',1],['Pack / ship',1]];
+  const embMat = [['Pellon stabilizer',1],['Crafter - CR (PS965)',1]];
+
+  mkRec('DecoTwill - DT','DT_HW','STANDARD',[['DecoTwill - DT',1],...hw],subLab);
+  mkRec('SimWoven - SW','SW_HW','STANDARD',[['SimWoven - SW',1],...hw],subLab);
+  mkRec('DecoTwill EMB','DT_EMB_HW','EMB',[['DecoTwill - DT',1],...hw,...embMat],embLab);
+  mkRec('SimWoven EMB','SW_EMB_HW','EMB',[['SimWoven - SW',1],...hw,...embMat],embLab);
+  mkRec('DecoLeather','DL_HW','STANDARD',[['DecoLeather - Saddle',1],...hw],etchLab);
+  mkRec('DecoSuede','DS_HW','STANDARD',[['DecoSuede - Chestnut',1],...hw],etchLab);
+  mkRec('DecoLeather EMB','DL_EMB_HW','EMB',[['DecoLeather - Saddle',1],...hw,...embMat],etchEmbLab);
+  mkRec('DecoSuede EMB','DS_EMB_HW','EMB',[['DecoSuede - Chestnut',1],...hw,...embMat],etchEmbLab);
+  mkRec('Deco3D','3D_HW','STANDARD',[['Satin - 3D top layer',1],['Jacquard - 3D/S3D base',1],['Apparel - AP (3218)',1],['PSA  - MP (A465)',1]],[['Setup / graphics',1],['Sublimation press',1],['Lamination press',1],['Kiss cut',2],['Laser cut',1],['QC',1],['Pack / ship',1]]);
+  mkRec('SUPA3D','S_3D_HW','STANDARD',[['Jacquard - 3D/S3D base',1],['Apparel - AP (3218)',1],['PSA  - MP (A465)',1]],subLab);
+  mkRec('Silicone DF','DF_SL','STANDARD',[['Silicone - Black',1]],[['Setup / graphics',1],['Laser cut',1],['Weeding',1],['Individual cut / sort',1],['QC',1],['Pack / ship',1]]);
+  mkRec('Metallic DF','DF_MT','STANDARD',[['Metallic - Gold',1]],[['Setup / graphics',1],['Laser cut',1],['Weeding',1],['Individual cut / sort',1],['QC',1],['Pack / ship',1]]);
+  mkRec('Reflective DF','DF_RF','STANDARD',[['Reflective - Black',1]],[['Setup / graphics',1],['Laser cut',1],['Weeding',1],['Individual cut / sort',1],['QC',1],['Pack / ship',1]]);
+  mkRec('DecoMetallic','DM_HW','STANDARD',[['Sports Twill',1],['Metallic - Gold',1],['Apparel - AP (3218)',1],['PSA  - MP (A465)',1]],etchLab);
+  mkRec('Ecostiks','ECO_CP','STANDARD',[],subLab);
+}
+
+// ── COST CALCULATION ──────────────────────────────────────────────────────
+function calcPanelCost(sku) {
+  const rec = REC[sku];
+  if (!rec) return { mat:0, lab:0, total:0, pending:true, matRows:[], labRows:[] };
+
+  let matTotal = 0, labTotal = 0;
+  let pending = false;
+  const matRows = [], labRows = [];
+
+  rec.materials.forEach(({name, mult}) => {
+    const cost = (M[name] || 0) * mult;
+    const isPend = !M[name] || M[name] === 0;
+    if (isPend) pending = true;
+    matRows.push({ name: mult > 1 ? `${name} ×${mult}` : name, cost, pending: isPend });
+    matTotal += cost;
+  });
+
+  rec.labor.forEach(({name, mult}) => {
+    let cost = 0;
+    let isPend = false;
+    if (name === 'EMB stitch rate') {
+      // handled per-patch in pricing table via stitch count
+      cost = 0;
+    } else {
+      cost = (L[name] || 0) * mult;
+      isPend = !L[name] || L[name] === 0;
+      if (isPend && LS[name] !== 'CONFIRMED') pending = true;
+    }
+    labRows.push({ name: mult > 1 ? `${name} ×${mult}` : name, cost, pending: isPend && LS[name] !== 'CONFIRMED' });
+    labTotal += cost;
+  });
+
+  return { mat:matTotal, lab:labTotal, total:matTotal+labTotal, pending, matRows, labRows };
+}
+
+function vlAddon() {
+  return (M['Velcro - VL'] || 5.07) - ((M['Apparel - AP (3218)'] || 2.03) + (M['PSA  - MP (A465)'] || 3.02));
+}
+
+// ── PRODUCT CARD ──────────────────────────────────────────────────────────
+const PRODUCT_INFO = {
+  DT_HW:     { name:'DecoTwill - DT',        category:'Sublimated',            process:'Print → Sub press → Lam → Laser cut',                                    variants:[['DT_AP',false],['DT_HW',true],['DT_CR',false],['DT_VL',false],['DT_NA',false]] },
+  SW_HW:     { name:'SimWoven - SW',         category:'Sublimated',            process:'Print → Sub press → Lam → Laser cut',                                    variants:[['SW_AP',false],['SW_HW',true],['SW_CR',false],['SW_VL',false],['SW_NA',false]] },
+  DT_EMB_HW: { name:'DecoTwill EMB',    category:'Sublimated + EMB',      process:'Print → Sub → Lam → Laser cut → Extra press → Extra laser → EMB machine', variants:[['DT_AP_EMB',false],['DT_HW_EMB',true],['DT_CR_EMB',false],['DT_VL_EMB',false]] },
+  SW_EMB_HW: { name:'SimWoven EMB',     category:'Sublimated + EMB',      process:'Print → Sub → Lam → Laser cut → Extra press → Extra laser → EMB machine', variants:[['SW_AP_EMB',false],['SW_HW_EMB',true],['SW_CR_EMB',false],['SW_VL_EMB',false]] },
+  DL_HW:     { name:'DecoLeather / DecoDuo', category:'Laser Etched',    process:'Lam → Laser etch → Laser cut',                                            variants:[['DL-BK_HW',false],['DL-GR_HW',false],['DL-SD_HW',true],['DL-SD_VL',false],['DL-SD_NA',false]] },
+  DS_HW:     { name:'DecoSuede',        category:'Laser Etched',          process:'Lam → Laser etch → Laser cut',                                            variants:[['DS-CH_HW',true],['DS-CF_HW',false],['DS-DN_HW',false],['DS-GR_HW',false],['DS-CH_VL',false]] },
+  DL_EMB_HW: { name:'DecoLeather EMB',  category:'Laser Etched + EMB',    process:'Lam → Laser etch → Laser cut → Extra press → Extra laser → EMB machine',  variants:[['DL-SD_HW_EMB',true],['DL-BK_HW_EMB',false],['DL-SD_VL_EMB',false]] },
+  DS_EMB_HW: { name:'DecoSuede EMB',    category:'Laser Etched + EMB',    process:'Lam → Laser etch → Laser cut → Extra press → Extra laser → EMB machine',  variants:[['DS-CH_HW_EMB',true],['DS-CF_HW_EMB',false],['DS-CH_VL_EMB',false]] },
+  '3D_HW':   { name:'Deco3D',           category:'3D / Multilayer',       process:'Sub print → Press → Lam → Kiss cut (×2) → Laser cut',                    variants:[['3D_AP',false],['3D_HW',true],['3D_CR',false],['3D_VL',false],['3D_NA',false]] },
+  S_3D_HW:    { name:'SUPA3D',           category:'3D / Multilayer',       process:'HT top + jacquard base → Sub press → Lam → Laser cut',                   variants:[['S3D_AP',false],['S3D_HW',true],['S3D_CR',false],['S3D_VL',false],['S3D_NA',false]] },
+  DF_SL:  { name:'Silicone — DF',    category:'Direct to Film',        process:'Setup → Laser cut → Weed → Sort',                                         variants:[['DF-SL-BK',true],['DF-SL-WH',false],['DF-SL-SV',false],['DF-SL-GD',false]] },
+  DF_MT:  { name:'Metallic — DF',    category:'Direct to Film',        process:'Setup → Laser cut → Weed → Sort',                                         variants:[['DF-MT-GD',false],['DF-MT-SV',false],['DF-MT-HL',false]] },
+  DF_RF:  { name:'Reflective — DF',  category:'Direct to Film',        process:'Setup → Laser cut → Weed → Sort',                                         variants:[['DF-RF-BK',false],['DF-RF-SV',true]] },
+  DM_HW:     { name:'DecoMetallic',     category:'Mixed Media',           process:'Lam metallic film onto Sports Twill → Laser etch + cut',                  variants:[['DM-SV_HW',false],['DM-GD_HW',true],['DM-GD_VL',false],['DM-GD_NA',false]] },
+  ECO_CP:    { name:'Ecostiks',         category:'Labor Only',            process:'Customer supplies material → Sub press → Lam → Laser cut',                variants:[['ECO_NA',true]] },
+};
+
+function prodCardHTML(sku) {
+  const info = PRODUCT_INFO[sku];
+  if (!info) return '';
+  const pc = calcPanelCost(sku);
+
+  const matRows = pc.matRows.map((r,i) => `
+    <div class="stack-row${i%2?' alt':''}${r.pending?' pend':''}">
+      <span class="stack-lbl${r.pending?' pend':''}">${r.name}</span>
+      <span class="stack-val${r.pending?' pend':''}">${r.pending?'TBD ⏳':'$'+r.cost.toFixed(2)}</span>
+    </div>`).join('');
+
+  const labRows = pc.labRows.map((r,i) => `
+    <div class="stack-row${i%2?' alt':''}${r.pending?' pend':''}">
+      <span class="stack-lbl${r.pending?' pend':''}">${r.name}</span>
+      <span class="stack-val${r.pending?' pend':''}">${r.pending?'TBD ⏳':'$'+r.cost.toFixed(2)}</span>
+    </div>`).join('');
+
+  const matSub = pc.matRows.reduce((s,r)=>s+(r.pending?0:r.cost),0);
+  const labSub = pc.labRows.reduce((s,r)=>s+(r.pending?0:r.cost),0);
+
+  return `
+  <div class="prod-card">
+    <div class="prod-card-hdr">
+      <span class="prod-name">${info.name}${pc.pending?' ⏳':''}</span>
+      <span class="prod-sku">${sku}</span>
+    </div>
+    <div class="prod-body">
+      <div class="sec-label">Product info</div>
+      <div class="info-row"><span class="info-lbl">Category</span><span class="info-val">${info.category}</span></div>
+      <div class="info-row"><span class="info-lbl">Process</span><span class="info-val" style="font-size:10px">${info.process}</span></div>
+      <div class="sec-label">Variants</div>
+      <div class="chip-row">
+        ${info.variants.map(([c,b])=>`<span class="chip${b?' base':''}">${c}</span>`).join('')}
+      </div>
+      <div class="sec-label">Cost stack — most expensive recipe</div>
+      <div class="stack-blk">
+        <div class="stack-hdr mat">Materials</div>
+        ${matRows}
+        <div class="subtotal mat"><span>Materials subtotal</span><span>$${matSub.toFixed(2)}</span></div>
+      </div>
+      <div class="stack-blk">
+        <div class="stack-hdr lab">Labor</div>
+        ${labRows}
+        <div class="subtotal lab"><span>Labor subtotal</span><span>${labSub>0?'$'+labSub.toFixed(2):'TBD'}</span></div>
+      </div>
+      <div class="panel-total">
+        <span class="panel-total-lbl">Total panel cost</span>
+        <span class="panel-total-val${pc.pending?' pend':''}">${pc.total>0?'$'+pc.total.toFixed(2):'TBD'}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── PRICING TABLE ─────────────────────────────────────────────────────────
+function pricingTableHTML(tabKey, pricingSku, title, subtitle) {
+  const vlOn   = VL[tabKey] || false;
+  const rec    = REC[pricingSku];
+  const isEmb  = rec && rec.panelType === 'EMB';
+  const yields = isEmb ? YE : Y;
+  const pc     = calcPanelCost(pricingSku);
+  const base   = pc.total + (vlOn ? vlAddon() : 0);
+  const stitch = L['EMB stitch rate'] || 1.00;
+
+  const qtyHdrs = QTYS.map(q=>`<th colspan="2" style="text-align:center">Qty ${q}</th>`).join('');
+  const subHdrs = QTYS.map(()=>`<th style="color:var(--blue)">Dist</th><th style="color:var(--green)">Partner</th>`).join('');
+
+  const rows = yields.map((y,si) => {
+    // For EMB: add stitch cost per patch on top of panel cost / ups
+    const embStitchCost = isEmb ? (y.stitches * stitch / 1000) : 0;
+    const cpu = y.ups > 0 ? (base / y.ups) + embStitchCost : 0;
+
+    const cells = QTYS.map(q => {
+      const dd  = D_DISC[parseInt(q)] || 0;
+      const pd_ = P_DISC[parseInt(q)] || 0;
+      const dist = cpu > 0 ? (cpu/(1-MARGIN_DIST))*(1-dd) : 0;
+      const part = cpu > 0 ? (cpu/(1-MARGIN_PART))*(1-pd_) : 0;
+      return `<td class="${dist>0?'dist':''}">${dist>0?'$'+dist.toFixed(2):'<span style="color:var(--pending);font-size:10px">TBD</span>'}</td>
+              <td class="${part>0?'part':''}">${part>0?'$'+part.toFixed(2):'<span style="color:var(--pending);font-size:10px">TBD</span>'}</td>`;
+    }).join('');
+
+    return `<tr>
+      <td>${y.size}</td>
+      <td>${y.ups}</td>
+      <td style="text-align:right;font-family:var(--mono)">${cpu>0?'$'+cpu.toFixed(2):'TBD'}</td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  return `
+  <div class="pricing-wrap">
+    <div class="pricing-hdr">
+      <div>
+        <span class="pricing-title">${title}</span>
+        <span class="pricing-sub"> — ${subtitle}</span>
+      </div>
+      <div class="vl-wrap${vlOn?' on':''}">
+        <span>Velcro add-on</span>
+        <label class="toggle">
+          <input type="checkbox" ${vlOn?'checked':''} onchange="toggleVL('${tabKey}',this.checked)">
+          <span class="t-track"></span><span class="t-thumb"></span>
+        </label>
+      </div>
+    </div>
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:left;min-width:100px">Size</th>
+            <th style="text-align:center;min-width:44px"># Up${isEmb?' (15×10")':''}</th>
+            <th style="text-align:right;min-width:70px">CPU</th>
+            ${qtyHdrs}
+          </tr>
+          <tr>
+            <th style="background:var(--sec-bg)"></th>
+            <th style="background:var(--sec-bg)"></th>
+            <th style="background:var(--sec-bg)"></th>
+            ${subHdrs}
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="tbl-footer">
+      <div class="leg"><div class="leg-dot" style="background:var(--blue)"></div>Distributor (50%)</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>Partner (40%)</div>
+      <span class="tbl-note">Per patch. Setup fee $25/order not included.${isEmb?' EMB: stitch cost added per size at $'+stitch.toFixed(2)+'/1000 stitches.':''}</span>
+    </div>
+  </div>`;
+}
+
+function toggleVL(tabKey, checked) {
+  VL[tabKey] = checked;
+  buildTabContent(tabKey);
+}
+
+// ── TAB CONFIGS ───────────────────────────────────────────────────────────
+const TAB_CONFIG = {
+  'sublimated':      { skus:['DT_HW','SW_HW'],           pricing:'DT_HW',    title:'Sublimated',          sub:'Most expensive: DT_HW' },
+  'sublimated-emb':  { skus:['DT_EMB_HW','SW_EMB_HW'],   pricing:'DT_EMB_HW',title:'Sublimated EMB',      sub:'Most expensive: DT_HW_EMB — 15×10" EMB panel' },
+  'laser-etched':    { skus:['DL_HW','DS_HW'],            pricing:'DL_HW',    title:'Laser Etched',        sub:'Most expensive: DL-SD_HW' },
+  'laser-etched-emb':{ skus:['DL_EMB_HW','DS_EMB_HW'],   pricing:'DL_EMB_HW',title:'Laser Etched EMB',    sub:'Most expensive: DL-SD_HW_EMB — 15×10" EMB panel' },
+  'deco3d':          { skus:['3D_HW'],                 pricing:'3D_HW',    title:'Deco3D',              sub:'3D_HW — satin top + jacquard base' },
+  'supa3d':          { skus:['S_3D_HW'],                pricing:'S_3D_HW',   title:'SUPA3D',              sub:'S3D_HW — HT top + jacquard base' },
+  'df':              { skus:['DF_SL','DF_MT','DF_RF'], pricing:'DF_SL', title:'Direct to Film',  sub:'Most expensive confirmed: DF-SL' },
+  'decometallic':    { skus:['DM_HW'],                 pricing:'DM_HW',    title:'DecoMetallic',        sub:'DM_HW — Sports Twill + metallic film' },
+  'ecostiks':        { skus:['ECO_CP'],                pricing:'ECO_CP',   title:'Ecostiks',            sub:'ECO_NA — labor only' },
+};
+
+function buildTabContent(tabKey) {
+  const cfg = TAB_CONFIG[tabKey];
+  if (!cfg) return;
+  const cards = cfg.skus.length === 1
+    ? `<div style="max-width:400px">${prodCardHTML(cfg.skus[0])}</div>`
+    : `<div class="prod-grid">${cfg.skus.map(prodCardHTML).join('')}</div>`;
+  document.getElementById('panel-'+tabKey).innerHTML =
+    cards + pricingTableHTML(tabKey, cfg.pricing, cfg.title+' pricing', cfg.sub);
+}
+
+function buildAll() {
+  buildSKU();
+  Object.keys(TAB_CONFIG).forEach(buildTabContent);
+}
+
+// ── SKU REFERENCE ─────────────────────────────────────────────────────────
+function buildSKU() {
+  const rows = RAW.skuRef || [];
+  if (!rows.length) { document.getElementById('panel-sku').innerHTML = '<div class="loading">No SKU reference data loaded.</div>'; return; }
+
+  const fmt = rows.find(r => r.TYPE === 'FORMAT');
+  const fmtBox = fmt ? `
+    <div style="background:var(--input-bg);border:1px solid #B5D4F4;border-radius:var(--r-sm);padding:10px 14px;margin-bottom:1.5rem;font-size:12px;color:var(--mat-text)">
+      <strong>SKU format:</strong> ${fmt.DESCRIPTION}
+    </div>` : '';
+
+  // Types that get tooltip on click
+  const TOOLTIP_TYPES = ['MATERIAL','ADHESIVE','MODIFIER'];
+
+  let htmlStr = fmtBox;
+  let currentSection = null;
+  let sectionItems = [];
+
+  function flushSection() {
+    if (!currentSection || !sectionItems.length) return;
+    htmlStr += `<div style="margin-bottom:1.5rem">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:10px">${currentSection}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px">
+        ${sectionItems.map(r => {
+          const hasTooltip = TOOLTIP_TYPES.includes(r.TYPE) && r.DESCRIPTION;
+          const tooltipAttr = hasTooltip
+            ? `data-tip="${r.DESCRIPTION.replace(/"/g,"&quot;")}" onclick="showTip(this)" style="cursor:pointer"`
+            : '';
+          const infoIcon = hasTooltip
+            ? `<span style="font-size:10px;color:var(--blue);margin-left:4px;flex-shrink:0" title="Click for details">ℹ</span>`
+            : '';
+          return `
+          <div ${tooltipAttr} style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:8px 10px;display:flex;align-items:flex-start;gap:8px;position:relative">
+            <span style="font-family:var(--mono);font-size:11px;font-weight:500;color:var(--mat-text);background:var(--input-bg);padding:2px 6px;border-radius:4px;flex-shrink:0;white-space:nowrap">${r.CODE}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:11px;color:var(--text);line-height:1.4;display:flex;align-items:center;justify-content:space-between">${r.NAME}${infoIcon}</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+    sectionItems = [];
+  }
+
+  rows.forEach(r => {
+    if (r.TYPE === 'SECTION') {
+      flushSection();
+      currentSection = r.CODE || r.NAME || r.LABEL || '';
+    } else if (['MATERIAL','COLOR','ADHESIVE','MODIFIER'].includes(r.TYPE)) {
+      if (!currentSection) currentSection = r.TYPE;
+      sectionItems.push(r);
+    }
+  });
+  flushSection();
+
+  // Add tooltip element
+  htmlStr += `<div id="sku-tip" style="display:none;position:fixed;z-index:999;background:var(--text);color:var(--white);font-size:12px;padding:8px 12px;border-radius:var(--r-sm);max-width:240px;line-height:1.5;pointer-events:none"></div>`;
+
+  document.getElementById('panel-sku').innerHTML = htmlStr;
+}
+
+function showTip(el) {
+  const tip = document.getElementById('sku-tip');
+  if (!tip) return;
+  const msg = el.getAttribute('data-tip');
+  if (!msg) return;
+  tip.textContent = msg;
+  tip.style.display = 'block';
+  const rect = el.getBoundingClientRect();
+  let top = rect.bottom + 6;
+  let left = rect.left;
+  if (left + 240 > window.innerWidth) left = window.innerWidth - 248;
+  tip.style.top = top + 'px';
+  tip.style.left = left + 'px';
+  setTimeout(() => {
+    document.addEventListener('click', hideTip, { once: true });
+  }, 10);
+}
+
+function hideTip() {
+  const tip = document.getElementById('sku-tip');
+  if (tip) tip.style.display = 'none';
+}
+
+// ── TAB SWITCH ────────────────────────────────────────────────────────────
+function switchTab(key, btn) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+key).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+loadData();
+</script>
+</body>
+</html>
