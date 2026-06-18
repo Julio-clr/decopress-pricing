@@ -256,7 +256,7 @@ function useDefaults() {
     'Jacquard - 3D/S3D base':1.81,'Sports Twill':4.72,
     'Metallic - Gold':4.61,'Pellon stabilizer':0.875,
     'Silicone - Black':8.54,'Apparel - AP (3218)':2.03,
-    'PSA  - MP (A465)':3.02,'Crafter - CR (PS965)':3.16,
+    'PSA - MP (A465)':3.02,'Crafter - CR (PS965)':3.16,
     'Velcro - VL':5.07,
   };
   L = {
@@ -292,7 +292,7 @@ function buildDefaultRecipes() {
       labor: labs.map(([name,mult])=>({name,mult}))
     };
   };
-  const hw = [['Apparel - AP (3218)',1],['PSA  - MP (A465)',1]];
+  const hw = [['Apparel - AP (3218)',1],['PSA - MP (A465)',1]];
   const subLab = [['Setup / graphics',1],['Sublimation press',1],['Lamination press',1],['Laser cut',1],['QC',1],['Pack / ship',1]];
   const etchLab = [['Setup / graphics',1],['Lamination press',1],['Laser etch',1],['Laser cut',1],['QC',1],['Pack / ship',1]];
   const embExtra = [['EMB Panel Lamination',1],['EMB Panel Laser cut',1]];
@@ -308,12 +308,12 @@ function buildDefaultRecipes() {
   mkRec('DecoSuede','DS_HW','STANDARD',[['DecoSuede - Chestnut',1],...hw],etchLab);
   mkRec('DecoLeather EMB','DL_EMB_HW','EMB',[['DecoLeather - Saddle',1],...hw,...embMat],etchEmbLab);
   mkRec('DecoSuede EMB','DS_EMB_HW','EMB',[['DecoSuede - Chestnut',1],...hw,...embMat],etchEmbLab);
-  mkRec('Deco3D','3D_HW','STANDARD',[['Satin - 3D top layer',1],['Jacquard - 3D/S3D base',1],['Apparel - AP (3218)',1],['PSA  - MP (A465)',1]],[['Setup / graphics',1],['Sublimation press',1],['Lamination press',1],['Kiss cut',2],['Laser cut',1],['QC',1],['Pack / ship',1]]);
-  mkRec('SUPA3D','S_3D_HW','STANDARD',[['Jacquard - 3D/S3D base',1],['Apparel - AP (3218)',1],['PSA  - MP (A465)',1]],subLab);
+  mkRec('Deco3D','3D_HW','STANDARD',[['Satin - 3D top layer',1],['Jacquard - 3D/S3D base',1],['Apparel - AP (3218)',1],['PSA - MP (A465)',1]],[['Setup / graphics',1],['Sublimation press',1],['Lamination press',1],['Kiss cut',2],['Laser cut',1],['QC',1],['Pack / ship',1]]);
+  mkRec('SUPA3D','S_3D_HW','STANDARD',[['Jacquard - 3D/S3D base',1],['Apparel - AP (3218)',1],['PSA - MP (A465)',1]],subLab);
   mkRec('Silicone DF','DF_SL','STANDARD',[['Silicone - Black',1]],[['Setup / graphics',1],['Laser cut',1],['Weeding',1],['Individual cut / sort',1],['QC',1],['Pack / ship',1]]);
   mkRec('Metallic DF','DF_MT','STANDARD',[['Metallic - Gold',1]],[['Setup / graphics',1],['Laser cut',1],['Weeding',1],['Individual cut / sort',1],['QC',1],['Pack / ship',1]]);
   mkRec('Reflective DF','DF_RF','STANDARD',[['Reflective - Black',1]],[['Setup / graphics',1],['Laser cut',1],['Weeding',1],['Individual cut / sort',1],['QC',1],['Pack / ship',1]]);
-  mkRec('DecoMetallic','DM_HW','STANDARD',[['Sports Twill',1],['Metallic - Gold',1],['Apparel - AP (3218)',1],['PSA  - MP (A465)',1]],etchLab);
+  mkRec('DecoMetallic','DM_HW','STANDARD',[['Sports Twill',1],['Metallic - Gold',1],['Apparel - AP (3218)',1],['PSA - MP (A465)',1]],etchLab);
   mkRec('Ecostiks','ECO_CP','STANDARD',[],subLab);
 }
 
@@ -353,7 +353,7 @@ function calcPanelCost(sku) {
 }
 
 function vlAddon() {
-  return (M['Velcro - VL'] || 5.07) - ((M['Apparel - AP (3218)'] || 2.03) + (M['PSA  - MP (A465)'] || 3.02));
+  return (M['Velcro - VL'] || 5.07) - ((M['Apparel - AP (3218)'] || 2.03) + (M['PSA - MP (A465)'] || 3.02));
 }
 
 // ── PRODUCT CARD ──────────────────────────────────────────────────────────
