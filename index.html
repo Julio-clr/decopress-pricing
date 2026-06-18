@@ -163,7 +163,7 @@ let VL = {};  // velcro toggle state per tab
 // ── LOAD ──────────────────────────────────────────────────────────────────
 async function loadData() {
   try {
-    const res  = await fetch(SCRIPT_URL);
+    const res  = await fetch(SCRIPT_URL + '?t=' + Date.now());
     const text = await res.text();
     const json = JSON.parse(text);
     processData(json);
@@ -193,7 +193,7 @@ function processData(json) {
       size:r.SIZE, ups:parseInt(r.UPS_PER_PANEL)||0,
       stitches:parseInt(r.STITCH_COUNT)||0
     }));
-    DATA.skuRef = json.skuRef;
+    RAW.skuRef = json.skuRef;
 
     const recRows = json.recipes || [];
     if (recRows.length > 0) {
