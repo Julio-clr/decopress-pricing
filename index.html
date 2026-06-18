@@ -239,6 +239,11 @@ function processData(json) {
       });
     }
 
+    // Debug — log what we got
+    console.log('Materials loaded:', Object.keys(M).length, M);
+    console.log('Labor loaded:', Object.keys(L).length, L);
+    console.log('Recipes loaded:', Object.keys(REC).length, Object.keys(REC));
+    console.log('Yields:', Y.length);
     document.getElementById('load-status').textContent = 'Loaded ✓';
     buildAll();
   } catch(e) {
