@@ -163,7 +163,7 @@ let VL = {};  // velcro toggle state per tab
 // ── LOAD ──────────────────────────────────────────────────────────────────
 function showLoadError(msg) {
   document.querySelectorAll('.panel').forEach(p => {
-    p.innerHTML = '<div style="padding:2rem;text-align:center;color:#dc2626;font-size:13px"><strong>Could not load data from Cost Engine Sheet.</strong><br>Check your internet connection and try refreshing.<br><small style='color:#999;margin-top:8px;display:block'>' + msg + '</small></div>';
+    p.innerHTML = "<div style='padding:2rem;text-align:center;color:#dc2626;font-size:13px'><strong>Could not load data from Cost Engine Sheet.</strong><br>Check your internet connection and try refreshing.<br><small style='color:#999;margin-top:8px;display:block'>" + msg + "</small></div>";
   });
 }
 
