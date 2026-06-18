@@ -167,17 +167,25 @@ function showLoadError(msg) {
   });
 }
 
-async function loadData() {
-  try {
-    const res  = await fetch(SCRIPT_URL + '?t=' + Date.now());
-    const text = await res.text();
-    const json = JSON.parse(text);
-    processData(json);
-  } catch(e) {
-    console.warn('Load failed:', e);
+function loadData() {
+  const callbackName = 'dpCallback_' + Date.now();
+  const script = document.createElement('script');
+  
+  window[callbackName] = function(data) {
+    delete window[callbackName];
+    document.body.removeChild(script);
+    processData(data);
+  };
+
+  script.onerror = function() {
+    delete window[callbackName];
+    document.body.removeChild(script);
     document.getElementById('load-status').textContent = 'Connection error';
-    showLoadError(e.toString());
-  }
+    showLoadError('Could not reach Cost Engine. Check your internet connection.');
+  };
+
+  script.src = SCRIPT_URL + '?callback=' + callbackName + '&t=' + Date.now();
+  document.body.appendChild(script);
 }
 
 function processData(json) {
