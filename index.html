@@ -209,10 +209,33 @@ function processData(json) {
     }));
     RAW.skuRef = json.skuRef;
 
+    // Parse settings
+    const settings = json.settings || [];
+    const S = { dealer:{disc:{}}, wholesale:{disc:{}}, partner:{disc:{}} };
+    const tierMap = { DEALER:'dealer', WHOLESALE:'wholesale', PARTNER:'partner' };
+    settings.forEach(r => {
+      const tier = tierMap[r.SECTION];
+      if (!tier) return;
+      const setting = r.SETTING;
+      const val = parseFloat(r.VALUE) || 0;
+      if (setting === 'Base margin') {
+        S[tier].margin = val;
+      } else if (setting && setting.includes('discount')) {
+        const qty = setting.replace('Qty ','').replace(' discount','');
+        S[tier].disc[qty] = val;
+      }
+    });
+    // Defaults if SETTINGS not loaded
+    if (!S.dealer.margin)    S.dealer.margin    = 0.70;
+    if (!S.wholesale.margin) S.wholesale.margin = 0.60;
+    if (!S.partner.margin)   S.partner.margin   = 0.40;
+    window.SETTINGS = S;
+
     const recRows = json.recipes || [];
     if (recRows.length > 0) {
       const skuRow  = recRows.find(r => r['ROW_TYPE']==='INFO' && r['LABEL']==='Base Recipe SKU');
       const allKeys = Object.keys(recRows[0]).filter(k => k!=='ROW_TYPE' && k!=='LABEL');
+
       const colToSku = {};
       if (skuRow) { allKeys.forEach(k => { if (skuRow[k]) colToSku[k] = skuRow[k]; }); }
       else         { allKeys.forEach(k => { colToSku[k] = k; }); }
@@ -240,10 +263,9 @@ function processData(json) {
     }
 
     // Debug — log what we got
-    console.log('Materials loaded:', Object.keys(M).length, M);
-    console.log('Labor loaded:', Object.keys(L).length, L);
-    console.log('Recipes loaded:', Object.keys(REC).length, Object.keys(REC));
-    console.log('Yields:', Y.length);
+
+
+
     document.getElementById('load-status').textContent = 'Loaded ✓';
     buildAll();
   } catch(e) {
@@ -288,6 +310,11 @@ function useDefaults() {
   ];
   // Build default recipes
   buildDefaultRecipes();
+  window.SETTINGS = {
+    dealer:    { margin:0.70, disc:{'10':0,'25':0,'50':0.05,'100':0.10,'250':0.15,'500':0.22,'1000':0.28,'2500':0.32,'5000':0.35} },
+    wholesale: { margin:0.60, disc:{'10':0,'25':0,'50':0.05,'100':0.10,'250':0.14,'500':0.20,'1000':0.25,'2500':0.29,'5000':0.32} },
+    partner:   { margin:0.40, disc:{'10':0,'25':0,'50':0.05,'100':0.10,'250':0.12,'500':0.18,'1000':0.22,'2500':0.25,'5000':0.28} },
+  };
 }
 
 function buildDefaultRecipes() {
@@ -348,9 +375,9 @@ function calcPanelCost(sku) {
     } else {
       cost = (L[name] || 0) * mult;
       isPend = !L[name] || L[name] === 0;
-      if (isPend && LS[name] !== 'CONFIRMED') pending = true;
+      if (isPend) pending = true;
     }
-    labRows.push({ name: mult > 1 ? `${name} ×${mult}` : name, cost, pending: isPend && LS[name] !== 'CONFIRMED' });
+    labRows.push({ name: mult > 1 ? `${name} ×${mult}` : name, cost, pending: isPend });
     labTotal += cost;
   });
 
@@ -435,79 +462,94 @@ function prodCardHTML(sku) {
 
 // ── PRICING TABLE ─────────────────────────────────────────────────────────
 function pricingTableHTML(tabKey, pricingSku, title, subtitle) {
-  const vlOn   = VL[tabKey] || false;
-  const rec    = REC[pricingSku];
-  const isEmb  = rec && rec.panelType === 'EMB';
+  const vlOn  = VL[tabKey] || false;
+  const rec   = REC[pricingSku];
+  const isEmb = rec && rec.panelType === 'EMB';
   const yields = isEmb ? YE : Y;
-  const pc     = calcPanelCost(pricingSku);
-  const base   = pc.total + (vlOn ? vlAddon() : 0);
+  const pc    = calcPanelCost(pricingSku);
+  const base  = pc.total + (vlOn ? vlAddon() : 0);
   const stitch = L['EMB stitch rate'] || 1.00;
+  const S = window.SETTINGS || { dealer:{margin:0.70,disc:{}}, wholesale:{margin:0.60,disc:{}}, partner:{margin:0.40,disc:{}} };
+  const QTYS_ALL = ['10','25','50','100','250','500','1000','2500','5000'];
 
-  const qtyHdrs = QTYS.map(q=>`<th colspan="2" style="text-align:center">Qty ${q}</th>`).join('');
-  const subHdrs = QTYS.map(()=>`<th style="color:var(--blue)">Dist</th><th style="color:var(--green)">Partner</th>`).join('');
+  function tierTable(tierKey, tierLabel, color) {
+    const tier = S[tierKey];
+    const margin = tier.margin || 0;
+    const disc = tier.disc || {};
 
-  const rows = yields.map((y,si) => {
-    // For EMB: add stitch cost per patch on top of panel cost / ups
-    const embStitchCost = isEmb ? (y.stitches * stitch / 1000) : 0;
-    const cpu = y.ups > 0 ? (base / y.ups) + embStitchCost : 0;
+    const qtyHdrs = QTYS_ALL.map(q=>`<th colspan="2" style="text-align:center;font-size:9px">Qty ${q}</th>`).join('');
+    const subHdrs = QTYS_ALL.map(q=>`
+      <th style="color:${color};font-size:9px">Price</th>
+      <th style="color:var(--muted);font-size:9px">MGN%</th>`).join('');
 
-    const cells = QTYS.map(q => {
-      const dd  = D_DISC[parseInt(q)] || 0;
-      const pd_ = P_DISC[parseInt(q)] || 0;
-      const dist = cpu > 0 ? (cpu/(1-MARGIN_DIST))*(1-dd) : 0;
-      const part = cpu > 0 ? (cpu/(1-MARGIN_PART))*(1-pd_) : 0;
-      return `<td class="${dist>0?'dist':''}">${dist>0?'$'+dist.toFixed(2):'<span style="color:var(--pending);font-size:10px">TBD</span>'}</td>
-              <td class="${part>0?'part':''}">${part>0?'$'+part.toFixed(2):'<span style="color:var(--pending);font-size:10px">TBD</span>'}</td>`;
+    const rows = yields.map((y,si) => {
+      const embStitchCost = isEmb ? (y.stitches * stitch / 1000) : 0;
+      const cpu = y.ups > 0 ? (base / y.ups) + embStitchCost : 0;
+      const bg = si%2===0 ? '' : 'style="background:var(--alt)"';
+
+      const cells = QTYS_ALL.map(q => {
+        const d = disc[q] || 0;
+        const price = cpu > 0 ? (cpu/(1-margin))*(1-d) : 0;
+        const actualMgn = price > 0 ? Math.round((1 - cpu/price)*100) : 0;
+        const priceStr = price > 0 ? '$'+price.toFixed(2) : '<span style="color:var(--pending);font-size:10px">TBD</span>';
+        const mgnStr  = price > 0 ? actualMgn+'%' : '';
+        return `<td style="font-family:var(--mono);font-size:11px;text-align:right;color:${color}">${priceStr}</td>
+                <td style="font-size:10px;text-align:right;color:var(--muted)">${mgnStr}</td>`;
+      }).join('');
+
+      return `<tr ${bg}>
+        <td style="font-size:11px;font-weight:500">${y.size}</td>
+        <td style="font-size:10px;color:var(--muted);text-align:center">${y.ups}</td>
+        <td style="font-family:var(--mono);font-size:11px;text-align:right">${cpu>0?'$'+cpu.toFixed(2):'TBD'}</td>
+        ${cells}
+      </tr>`;
     }).join('');
 
-    return `<tr>
-      <td>${y.size}</td>
-      <td>${y.ups}</td>
-      <td style="text-align:right;font-family:var(--mono)">${cpu>0?'$'+cpu.toFixed(2):'TBD'}</td>
-      ${cells}
-    </tr>`;
-  }).join('');
+    const mgnPct = Math.round(margin*100);
+    return `
+    <div class="pricing-wrap" style="margin-bottom:1rem">
+      <div class="pricing-hdr">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="pricing-title">${tierLabel} pricing</span>
+          <span style="font-size:10px;font-weight:500;padding:2px 8px;border-radius:4px;background:${color}22;color:${color}">${mgnPct}% margin</span>
+          <span class="pricing-sub">— ${subtitle}</span>
+        </div>
+        ${tierKey==='dealer'?`<div class="vl-wrap${vlOn?' on':''}">
+          <span>Velcro add-on</span>
+          <label class="toggle">
+            <input type="checkbox" ${vlOn?'checked':''} onchange="toggleVL('${tabKey}',this.checked)">
+            <span class="t-track"></span><span class="t-thumb"></span>
+          </label>
+        </div>`:''}
+      </div>
+      <div class="tbl-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align:left;min-width:90px">Size</th>
+              <th style="text-align:center;min-width:40px"># Up${isEmb?' (15×10")':''}</th>
+              <th style="text-align:right;min-width:65px">CPU</th>
+              ${qtyHdrs}
+            </tr>
+            <tr>
+              <th style="background:var(--sec-bg)"></th>
+              <th style="background:var(--sec-bg)"></th>
+              <th style="background:var(--sec-bg)"></th>
+              ${subHdrs}
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div class="tbl-footer">
+        <span class="tbl-note">Per patch. Setup fee $25/order not included.${isEmb?' EMB stitch cost added per size.':''}</span>
+      </div>
+    </div>`;
+  }
 
-  return `
-  <div class="pricing-wrap">
-    <div class="pricing-hdr">
-      <div>
-        <span class="pricing-title">${title}</span>
-        <span class="pricing-sub"> — ${subtitle}</span>
-      </div>
-      <div class="vl-wrap${vlOn?' on':''}">
-        <span>Velcro add-on</span>
-        <label class="toggle">
-          <input type="checkbox" ${vlOn?'checked':''} onchange="toggleVL('${tabKey}',this.checked)">
-          <span class="t-track"></span><span class="t-thumb"></span>
-        </label>
-      </div>
-    </div>
-    <div class="tbl-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th style="text-align:left;min-width:100px">Size</th>
-            <th style="text-align:center;min-width:44px"># Up${isEmb?' (15×10")':''}</th>
-            <th style="text-align:right;min-width:70px">CPU</th>
-            ${qtyHdrs}
-          </tr>
-          <tr>
-            <th style="background:var(--sec-bg)"></th>
-            <th style="background:var(--sec-bg)"></th>
-            <th style="background:var(--sec-bg)"></th>
-            ${subHdrs}
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
-    <div class="tbl-footer">
-      <div class="leg"><div class="leg-dot" style="background:var(--blue)"></div>Distributor (50%)</div>
-      <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>Partner (40%)</div>
-      <span class="tbl-note">Per patch. Setup fee $25/order not included.${isEmb?' EMB: stitch cost added per size at $'+stitch.toFixed(2)+'/1000 stitches.':''}</span>
-    </div>
-  </div>`;
+  return tierTable('dealer','Dealer','#0C447C') +
+         tierTable('wholesale','Wholesale','#27500A') +
+         tierTable('partner','Partner','#BA7517');
 }
 
 function toggleVL(tabKey, checked) {
